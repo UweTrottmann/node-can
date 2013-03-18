@@ -35,6 +35,8 @@ var _signals = require('./build/Release/can_signals');
 
 var kcd = require('./parse_kcd');
 
+var json = require('./parse_json');
+
 function Signal(desc)
 {
 	this.name = desc['name'];
@@ -182,5 +184,6 @@ DatabaseService.prototype.send = function (msg_name) {
 
 // Exports
 exports.parseNetworkDescription = kcd.parseKcdFile;
+exports.parseNetworkDescriptionJson = json.parseJsonFile;
 exports.DatabaseService = DatabaseService;
 
