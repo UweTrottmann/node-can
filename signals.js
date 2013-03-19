@@ -32,8 +32,6 @@ function decodeSignal(data, bitOffset, bitLength, isLittleEndian, isSigned) {
   var buffer = new Buffer(data.length);
   data.copy(buffer);
 
-  console.log(buffer.toString("hex"));
-
   var byteOffset = Math.floor(bitOffset / 8);
   switch (bitLength) {
     case 8:
