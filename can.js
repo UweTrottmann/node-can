@@ -68,15 +68,17 @@ Signal.prototype.onChange = function(listener) {
 // Someone wants to change signals' value
 Signal.prototype.update = function(newValue) {
 	// Nothing changed
-	if (this.value == newValue)
-		return;
-	
-	this.value = newValue;
+	if (this.value != newValue) {
+		this.value = newValue;
+  }
 
+  /////////////////////////////////////////////////////////////////////////////
+  // MODIFIED to always send an update
 	// Update all listeners, that the signal changed
 	for (f in this.listeners) {
 		this.listeners[f](this);
 	}
+  /////////////////////////////////////////////////////////////////////////////
 }
 
 //-----------------------------------------------------------------------------
