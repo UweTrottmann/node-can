@@ -25,12 +25,53 @@
  * @returns {Error|Number}
  */
 function decodeSignal(data, bitOffset, bitLength, isLittleEndian, isSigned) {
-  if(!Buffer.isBuffer(data)) {
+  if (!Buffer.isBuffer(data)) {
     throw "Data is not a buffer.";
   }
-  
-  console.log(data.toString("hex"));
-  
+
+  var buffer = new Buffer(data.length);
+  data.copy(buffer);
+
+  console.log(buffer.toString("hex"));
+
+  var byteOffset = Math.floor(bitOffset / 8);
+  switch (bitLength) {
+    case 8:
+      if (isSigned) {
+        return data.readInt8(byteOffset);
+      } else {
+        return data.readUInt8(byteOffset);
+      }
+    case 16:
+      if (isSigned) {
+        if (isLittleEndian) {
+          return data.readInt16LE(byteOffset);
+        } else {
+          return data.readInt16BE(byteOffset);
+        }
+      } else {
+        if (isLittleEndian) {
+          return data.readUInt16LE(byteOffset);
+        } else {
+          return data.readUInt16BE(byteOffset);
+        }
+      }
+    case 32:
+      if (isSigned) {
+        if (isLittleEndian) {
+          return data.readInt32LE(byteOffset);
+        } else {
+          return data.readInt32BE(byteOffset);
+        }
+      } else {
+        if (isLittleEndian) {
+          return data.readUInt32LE(byteOffset);
+        } else {
+          return data.readUInt32BE(byteOffset);
+        }
+      }
+  }
+
   return 0;
 }
 
