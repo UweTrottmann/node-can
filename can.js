@@ -32,6 +32,7 @@ exports.createRawChannel = function(channel, timestamps) { return new can.RawCha
 // Signal-Object
 
 var _signals = require('./build/Release/can_signals');
+var signals = require('./signals')
 
 var kcd = require('./parse_kcd');
 
@@ -99,8 +100,9 @@ function Message(desc)
 
 //-----------------------------------------------------------------------------
 // DatabaseService
-function DatabaseService(channel, db_desc) {
+function DatabaseService(channel, db_desc, isUsingJavascriptDecoding) {
 	this.channel = channel;
+  this.isUsingJavascriptDecoding = isUsingJavascriptDecoding;
 	
 	this.messages = [];
 
@@ -133,8 +135,15 @@ DatabaseService.prototype.onMessage = function (msg) {
 	// Let the C-Portition extract and convert the signal
 	for (i in m.signals) {
 		var s = m.signals[i];
-		var val = _signals.decode_signal(msg.data, s.bitOffset, s.bitLength, s.endianess == 'little', s.type == 'signed');
-		
+    
+    if (this.isUsingJavascriptDecoding) {
+      // Decode with Javascript code
+      var val = signals.decodeSignal(msg.data, s.bitOffset, s.bitLength, s.endianess == 'little', s.type == 'signed');
+    } else {
+      // Decode with C code
+      var val = _signals.decode_signal(msg.data, s.bitOffset, s.bitLength, s.endianess == 'little', s.type == 'signed');
+    }
+    
 		if (s.factor)
 			val *= s.factor;
 		
