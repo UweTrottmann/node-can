@@ -25,7 +25,11 @@
  * @returns {Error|Number}
  */
 function decodeSignal(data, bitOffset, bitLength, isLittleEndian, isSigned) {
-  console.log("Data: " + data);
+  if(!Buffer.isBuffer(data)) {
+    throw "Data is not a buffer.";
+  }
+  
+  console.log(data.toString("hex"));
   
   return 0;
 }
