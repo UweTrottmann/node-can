@@ -26,7 +26,9 @@ var can = require('./build/Release/can');
 var buffer = require('buffer');
 
 // Exports
-exports.createRawChannel = function(channel, timestamps) { return new can.RawChannel(channel, timestamps); }
+exports.createRawChannel = function(channel, timestamps) {
+  return new can.RawChannel(channel, timestamps);
+}
 
 //-----------------------------------------------------------------------------
 // Signal-Object
@@ -40,24 +42,24 @@ var json = require('./parse_json');
 
 function Signal(desc)
 {
-	this.name = desc['name'];
-	
-	this.bitOffset = desc['bitOffset'];
-	this.bitLength = desc['bitLength'];
-	this.endianess = desc['endianess'];
-	this.type = desc['type'];
-	
-	this.offset = desc['offset'];
-	this.factor = desc['factor'];
-	
-	this.minValue = desc['minValue'];
-	this.maxValue = desc['maxValue'];
+  this.name = desc['name'];
 
-	this.value = desc['defaultValue'];
-	if (!this.value)
-		this.value = 0;
-	
-	this.listeners = [];
+  this.bitOffset = desc['bitOffset'];
+  this.bitLength = desc['bitLength'];
+  this.endianess = desc['endianess'];
+  this.type = desc['type'];
+
+  this.offset = desc['offset'];
+  this.factor = desc['factor'];
+
+  this.minValue = desc['minValue'];
+  this.maxValue = desc['maxValue'];
+
+  this.value = desc['defaultValue'];
+  if (!this.value)
+    this.value = 0;
+
+  this.listeners = [];
 }
 
 /**
@@ -67,7 +69,7 @@ function Signal(desc)
  */
 Signal.prototype.registerOnChangeListener = function(listener) {
   // add listener to array
-	this.listeners.push(listener);
+  this.listeners.push(listener);
 };
 
 /**
@@ -76,8 +78,8 @@ Signal.prototype.registerOnChangeListener = function(listener) {
  * @returns {undefined}
  */
 Signal.prototype.unregisterOnChangeListener = function(listener) {
-	for (var i = 0; i < this.listeners.length; i++){
-    if(this.listeners[i] === listener){
+  for (var i = 0; i < this.listeners.length; i++) {
+    if (this.listeners[i] === listener) {
       // remove listener from array
       this.listeners.splice(i, 1);
     }
@@ -86,17 +88,17 @@ Signal.prototype.unregisterOnChangeListener = function(listener) {
 
 // Someone wants to change signals' value
 Signal.prototype.update = function(newValue) {
-	// Nothing changed
-	if (this.value != newValue) {
-		this.value = newValue;
+  // Nothing changed
+  if (this.value != newValue) {
+    this.value = newValue;
   }
 
   /////////////////////////////////////////////////////////////////////////////
   // MODIFIED to always send an update
-	// Update all listeners, that the signal changed
-	for (f in this.listeners) {
-		this.listeners[f](this);
-	}
+  // Update all listeners, that the signal changed
+  for (f in this.listeners) {
+    this.listeners[f](this);
+  }
   /////////////////////////////////////////////////////////////////////////////
 };
 
@@ -104,112 +106,151 @@ Signal.prototype.update = function(newValue) {
 // Message-Object
 function Message(desc)
 {
-	this.id = desc.id;
-	this.ext = desc.ext;
-	
-	this.name = desc.name;
-	
-	this.length = desc.length;
-	
-	this.signals = [];
-	
-	for (i in desc['signals']) {
-		var s = desc['signals'][i];
-		this.signals[s.name] = new Signal(s);
-	}
+  this.id = desc.id;
+  this.ext = desc.ext;
+
+  this.name = desc.name;
+
+  this.length = desc.length;
+
+  this.signals = [];
+
+  for (i in desc['signals']) {
+    var s = desc['signals'][i];
+    this.signals[s.name] = new Signal(s);
+  }
+
+  this.listeners = [];
 }
+
+/**
+ * Register a listener for changes on all signals for this message.
+ * @param {type} listener
+ * @returns {undefined}
+ */
+Message.prototype.registerOnChangeListener = function(listener) {
+  // add listener to array
+  this.listeners.push(listener);
+};
+
+/**
+ * Unregister any listeners matching the passed one.
+ * @param {type} listener
+ * @returns {undefined}
+ */
+Message.prototype.unregisterOnChangeListener = function(listener) {
+  for (var i = 0; i < this.listeners.length; i++) {
+    if (this.listeners[i] === listener) {
+      // remove listener from array
+      this.listeners.splice(i, 1);
+    }
+  }
+};
+
+/**
+ * Notify listeners that a new message with potential new signal values has arrived.
+ * @returns {undefined}
+ */
+Message.prototype.update = function() {
+  for (f in this.listeners) {
+    this.listeners[f](this);
+  }
+};
 
 //-----------------------------------------------------------------------------
 // DatabaseService
 function DatabaseService(channel, db_desc, isUsingJavascriptDecoding) {
-	this.channel = channel;
+  this.channel = channel;
   this.isUsingJavascriptDecoding = isUsingJavascriptDecoding;
-	
-	this.messages = [];
 
-	for (i in db_desc) {
-		var m = db_desc[i];
-		var id = m.id | (m.ext ? 1 : 0) << 31;
+  this.messages = [];
 
-		var nm = new Message(m);
-		this.messages[id] = nm;
-		this.messages[m.name] = nm;
-	}
-	
-	channel.addListener("onMessage", this.onMessage, this);
+  for (i in db_desc) {
+    var m = db_desc[i];
+    var id = m.id | (m.ext ? 1 : 0) << 31;
+
+    var nm = new Message(m);
+    this.messages[id] = nm;
+    this.messages[m.name] = nm;
+  }
+
+  channel.addListener("onMessage", this.onMessage, this);
 }
 
-DatabaseService.prototype.onMessage = function (msg) {
-	if (msg.rtr)
-		return;
-	
-	id = msg.id | (msg.ext ? 1 : 0) << 31;
+DatabaseService.prototype.onMessage = function(messageReceived) {
+  if (messageReceived.rtr)
+    return;
 
-	var m = this.messages[id];
-	
-	if (!m)
-	{
-		console.log("Message ID " + msg.id + " not found");
-		return;
-	}
-	
-	// Extract and convert the signal
-	for (i in m.signals) {
-		var s = m.signals[i];
-    
+  id = messageReceived.id | (messageReceived.ext ? 1 : 0) << 31;
+
+  var messageLocal = this.messages[id];
+
+  if (!messageLocal)
+  {
+    console.log("Message ID " + messageReceived.id + " not found");
+    return;
+  }
+
+  // Extract and convert all signals
+  for (i in messageLocal.signals) {
+    var s = messageLocal.signals[i];
+
     if (this.isUsingJavascriptDecoding) {
       // Decode with Javascript code
-      var val = signals.decodeSignal(msg.data, s.bitOffset, s.bitLength, s.endianess == 'little', s.type == 'signed');
+      var val = signals.decodeSignal(messageReceived.data, s.bitOffset, s.bitLength, s.endianess == 'little', s.type == 'signed');
     } else {
       // Decode with C code
-      var val = _signals.decode_signal(msg.data, s.bitOffset, s.bitLength, s.endianess == 'little', s.type == 'signed');
+      var val = _signals.decode_signal(messageReceived.data, s.bitOffset, s.bitLength, s.endianess == 'little', s.type == 'signed');
     }
-    
-		if (s.factor)
-			val *= s.factor;
-		
-		if (s.offset)
-			val += s.offset;
 
-		s.update(val);
-	}
+    if (s.factor)
+      val *= s.factor;
+
+    if (s.offset)
+      val += s.offset;
+
+    s.update(val);
+  }
+
+  // update listeners on this message
+  messageLocal.update();
 }
 
-DatabaseService.prototype.send = function (msg_name) {
-	var m = this.messages[msg_name]
-	
-	if (!m)
-		throw msg_name + " not defined";
-	
-	var canmsg = {
-		id: m.id,
-		ext: m.ext,
-		rtr: false,
-		data: new Buffer(m.length)
-	}
-	
-	for (var i = 0; i < m.length; i++)
-		canmsg.data[i] = 0;
-	
-	for (i in m.signals) {
-		var s = m.signals[i];
+DatabaseService.prototype.send = function(msg_name) {
+  var m = this.messages[msg_name]
 
-		var val = s.value;
+  if (!m)
+    throw msg_name + " not defined";
 
-		// Apply factor/offset and convert to Integer
-		if (s.offset)
-			val -= s.offset;
-		
-		if (s.factor)
-			val /= s.factor;
-		
-		if (typeof(val) == 'double')
-			val = parseInt(Math.round(val));
-		
-		_signals.encode_signal(canmsg.data, s.bitOffset, s.bitLength, s.endianess == 'little', s.type == 'signed', val);
-	}
-	
-	this.channel.send(canmsg);
+  var canmsg = {
+    id: m.id,
+    ext: m.ext,
+    rtr: false,
+    data: new Buffer(m.length)
+  }
+
+  for (var i = 0; i < m.length; i++)
+    canmsg.data[i] = 0;
+
+  for (i in m.signals) {
+    var s = m.signals[i];
+
+    var val = s.value;
+
+    // Apply factor/offset and convert to Integer
+    if (s.offset)
+      val -= s.offset;
+
+    if (s.factor)
+      val /= s.factor;
+
+    if (typeof(val) == 'double')
+      val = parseInt(Math.round(val));
+
+    _signals.encode_signal(canmsg.data, s.bitOffset, s.bitLength, s.endianess == 'little', s.type == 'signed', val);
+  }
+
+  this.channel.send(canmsg);
 }
 
 // Exports
