@@ -60,10 +60,29 @@ function Signal(desc)
 	this.listeners = [];
 }
 
-// Keep track of listeners who want to be notified if this signal changes
-Signal.prototype.onChange = function(listener) {
+/**
+ * Register a listener for changes on this signal.
+ * @param {type} listener
+ * @returns {undefined}
+ */
+Signal.prototype.registerOnChangeListener = function(listener) {
+  // add listener to array
 	this.listeners.push(listener);
-}
+};
+
+/**
+ * Unregister any listeners matching the passed one.
+ * @param {type} listener
+ * @returns {undefined}
+ */
+Signal.prototype.unregisterOnChangeListener = function(listener) {
+	for (var i = 0; i < this.listeners.length; i++){
+    if(this.listeners[i] === listener){
+      // remove listener from array
+      this.listeners.splice(i, 1);
+    }
+  }
+};
 
 // Someone wants to change signals' value
 Signal.prototype.update = function(newValue) {
@@ -79,7 +98,7 @@ Signal.prototype.update = function(newValue) {
 		this.listeners[f](this);
 	}
   /////////////////////////////////////////////////////////////////////////////
-}
+};
 
 //-----------------------------------------------------------------------------
 // Message-Object
@@ -134,7 +153,7 @@ DatabaseService.prototype.onMessage = function (msg) {
 		return;
 	}
 	
-	// Let the C-Portition extract and convert the signal
+	// Extract and convert the signal
 	for (i in m.signals) {
 		var s = m.signals[i];
     
