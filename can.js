@@ -54,6 +54,7 @@ function Signal(desc)
 
   this.minValue = desc['minValue'];
   this.maxValue = desc['maxValue'];
+  this.resolution = desc['resolution'];
 
   this.value = desc['defaultValue'];
   if (!this.value)
@@ -61,6 +62,26 @@ function Signal(desc)
 
   this.listeners = [];
 }
+
+/**
+ * Returns the signal value scaled and rounded based on this signals resolution,
+ * minValue and maxValue.
+ * @returns {undefined}
+ */
+Signal.prototype.getValue = function() {
+  if (!this.minValue || !this.maxValue || !this.resolution) {
+    // return value unmodified
+    return this.value;
+  }
+  var targetRange = this.maxValue - this.minValue;
+  var sourceRange = Math.pow(2, this.bitLength) - 1;
+  var percentage = this.value / sourceRange;
+  var exactValue = percentage * targetRange;
+  var targetValue = Math.floor(exactValue / this.resolution) * this.resolution;
+  targetValue += this.minValue;
+
+  return targetValue;
+};
 
 /**
  * Register a listener for changes on this signal.

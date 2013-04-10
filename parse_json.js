@@ -66,12 +66,15 @@ function parseJsonFile(fileName) {
       var signals = message.signals;
       for (var s = 0; s < signals.length; s++) {
         var signal = signals[s];
-        
+
         var parsedSignal = {
           name: signal.name,
           bitLength: signal.bitLength ? parseInt(signal.bitLength) : 1,
           bitOffset: signal.bitOffset ? signal.bitOffset : 0,
           endianess: signal.endianess ? signal.endianess : 'little',
+          minValue: signal.minValue ? signal.minValue : undefined,
+          maxValue: signal.maxValue ? signal.maxValue : undefined,
+          resolution: signal.resolution ? signal.resolution : undefined
         };
 
         // get max offset
