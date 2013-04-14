@@ -15,5 +15,5 @@
     "preuninstall" : "rm -rf build/*"
   },
   "dependencies": { "xml2js": ">=0.2.0" },
-  "main": "can.js"
+  "main": "can-adapter.js"
 }
