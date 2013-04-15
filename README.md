@@ -1,62 +1,69 @@
-node-can
-========
+node-can for WebDAS
+===================
 
-This is a NodeJS SocketCAN extension. SocketCAN is a socket-based implementation of the CANbus protocol for Linux system.
+This is a [NodeJS][1] SocketCAN extension. [SocketCAN][2] is a socket-based implementation of the CANbus protocol for Linux system.
 
-This extensions makes it possible to send and receive CAN messages (extended, remote transission) using simple Javascript functions.
+This extensions makes it possible to send and receive CAN messages (extended, remote transission) using simple JavaScript functions.
+
+**This is a fork of [sebi2k1/node-can][3] extended and customized for the needs of a university project.**
 
 Usage
 -----
 
-Basic CAN example:
+Basic listening example:
 ```javascript
-var can = require('can');
+var canadapter = require('node-can');
 
-var channel = can.createRawChannel("vcan0", true);
+// C Decoder is faster than JS Decoder
+var isDecodeJS = false;
 
-// Log any message
-channel.addListener("onMessage", function(msg) { console.log(msg); } );
+// Read message format from network.json
+// Open socket on vcan0 interface
+// Listen for messages on "Instrumentation" bus
+canadapter.setup("./network.json", "vcan0", "Instrumentation", isDecodeJS);
 
-// Reply any message
-channel.addListener("onMessage", channel.send, channel);
-
-channel.start();
+// Message name, signal name, onUpdateCallback
+canadapter.registerSignalListener("SteeringInfo", "WheelAngle", function(s) {
+  // raw integer value
+  var rawValue = s.value;
+  // Converts using minValue, maxValue and resolution from network.json
+  var convertedValue = s.getValue();
+  console.log(Date.now() + ": Wheel angle is " + convertedValue);
+});
 ```
 
-Working with message and signals:
+Basic sending example:
 ```javascript
-var can = require('can');
-var fs = require('fs');
+// same setup as above
+var canadapter = require('node-can');
+canadapter.setup("./network.json", "vcan0", "Instrumentation", false);
 
-// Parse database
-var network = can.parseNetworkDescription("samples/can_definition_sample.kcd");
-var channel = can.createRawChannel("vcan0");
-var db      = new can.DatabaseService(channel, network.buses["Motor"].messages);
+var newValue = 10;
 
-channel.start();
+// update signals of a message
+canadapter.updateSignalValue("SteeringInfo", "WheelAngle", newValue);
 
-// Register a listener to get any value changes
-db.messages["CruiseControlStatus"].signals["SpeedKm"].onChange(function(s) {
-   console.log("SpeedKm " + s.value);
-}
-
-// Update tank temperature
-db.messages["TankController"].signals["TankTemperature"].update(80);
-
-// Trigger sending this message
-db.send("TankController");
+// send the message onto the bus
+canadapter.sendMessage("SteeringInfo");
 ```
 
-Install
--------
+There are also:
+```javascript
+// notifies when all signals for a message have been parsed
+canadapter.registerMessageListener("SteeringInfo", function(m) {
+  // access signals like m.signals["WheelAngle"].getValue()
+});
 
-There are two options for installing node-can:
+// convenience method accepting just message names or message.signal names
+// message listeners will call with a Message, signal listeners with a Signal back
+canadapter.registerListener("SteeringInfo.WheelAngle", onUpdateCallback);
 
-1. Clone / download node-can from [GitHub](https://github.com/sebi2k1/node-can),
-   then:
+// Tear down channel
+canadapter.stop();
+```
 
-    node-waf clean && node-waf configure build
+Each registerX function has a **un**registerX sibling which removes the given onUpdateCallback. The network.json used for this example can be found in the samples folder.
 
-2. Install via npm:
-
-    npm install can
+[1]: http://nodejs.org/
+[2]: http://en.wikipedia.org/wiki/SocketCAN
+[3]: https://github.com/sebi2k1/node-can
