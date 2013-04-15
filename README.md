@@ -1,9 +1,9 @@
 node-can for WebDAS
 ===================
 
-This is a [NodeJS][1] SocketCAN extension. [SocketCAN][2] is a socket-based implementation of the CANbus protocol for Linux system.
+This is a [Node.js][1] SocketCAN extension. [SocketCAN][2] is a socket-based implementation of the CAN protocol for Linux systems (PF_CAN).
 
-This extensions makes it possible to send and receive CAN messages (extended, remote transission) using simple JavaScript functions.
+This extensions makes it possible to send and receive CAN messages (extended, remote transmission) using simple JavaScript functions.
 
 **This is a fork of [sebi2k1/node-can][3] extended and customized for the needs of a university project.**
 
