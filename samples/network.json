@@ -1,0 +1,29 @@
+{
+  "buses": {
+    "Instrumentation":
+            {"messages": [
+                {
+                  "name": "SteeringInfo",
+                  "id": "0x001",
+                  "signals": [
+                    {"name": "WheelAngle", "bitOffset": 0, "bitLength": 16, "minValue": -90, "maxValue": 90, "resolution": 0.5},
+                    {"name": "Unused", "bitOffset": 16, "bitLength": 24}
+                  ]
+                },
+                {
+                  "name": "ParksensorBack",
+                  "id": "0x002",
+                  "signals": [
+                    {"name": "HAL", "bitOffset": 40, "bitLength": 8},
+                    {"name": "HSL", "bitOffset": 32, "bitLength": 8},
+                    {"name": "HML", "bitOffset": 24, "bitLength": 8},
+                    {"name": "HMR", "bitOffset": 16, "bitLength": 8},
+                    {"name": "HAR", "bitOffset": 8, "bitLength": 8},
+                    {"name": "HSR", "bitOffset": 0, "bitLength": 8}
+                  ]
+                }
+              ]
+            }
+  }
+
+}
